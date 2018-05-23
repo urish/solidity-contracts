@@ -4,6 +4,10 @@ const solparse = require('solparse');
 const AST_DIR = path.join(__dirname, '../../ast');
 const CONTRACTS_DIR = path.join(__dirname, '../../contracts');
 
+if (!fs.existsSync(AST_DIR)) {
+  fs.mkdirSync(AST_DIR);
+}
+
 function* getContractFiles() {
   for (const name of fs.readdirSync(CONTRACTS_DIR)) {
     if (name.endsWith('.sol')) {
@@ -33,6 +37,7 @@ function getAstFor(file, onError = () => null) {
   try {
     const ast = solparse.parseFile(file);
     fs.writeFileSync(cacheFile, JSON.stringify(ast));
+    return ast;
   } catch (err) {
     onError(file, err);
   }
