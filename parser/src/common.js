@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const CONTRACTS_DIR = '../../contracts';
-const AST_DIR = '../../ast';
+const solparse = require('solparse');
+const AST_DIR = path.join(__dirname, '../../ast');
+const CONTRACTS_DIR = path.join(__dirname, '../../contracts');
 
 function* getContractFiles() {
   for (const name of fs.readdirSync(CONTRACTS_DIR)) {
@@ -9,6 +10,10 @@ function* getContractFiles() {
       yield path.join(CONTRACTS_DIR, name);
     }
   }
+}
+
+function getCacheFileName(contractFile) {
+  return path.join(AST_DIR, path.basename(contractFile) + '.json');
 }
 
 function getContracts() {
@@ -20,22 +25,44 @@ function getContracts() {
   }
 }
 
-function* getAsts() {
-  for (const name of fs.readdirSync(AST_DIR)) {
-    if (name.endsWith('.json')) {
-      const file = path.join(AST_DIR, name);
-      yield {
-        file,
-        ast: JSON.parse(fs.readFileSync(file, 'utf-8')),
-      };
-    }
+function getAstFor(file, onError = () => null) {
+  const cacheFile = getCacheFileName(file);
+  if (fs.existsSync(cacheFile)) {
+    return JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
   }
+  try {
+    const ast = solparse.parseFile(file);
+    fs.writeFileSync(cacheFile, JSON.stringify(ast));
+  } catch (err) {
+    onError(file, err);
+  }
+}
+
+function* getAsts(onError = () => null) {
+  for (const file of getContractFiles()) {
+    yield {
+      file,
+      content: fs.readFileSync(file, 'utf-8'),
+      ast: getAstFor(file, onError),
+    };
+  }
+}
+
+function getLineAndOffset(sourceCode, pos) {
+  const contentBefore = sourceCode.substr(0, pos);
+  const linesBefore = contentBefore.split('\n');
+  return {
+    line: linesBefore.length,
+    offset: linesBefore[linesBefore.length - 1].length + 1,
+  };
 }
 
 module.exports = {
   AST_DIR,
   CONTRACTS_DIR,
+  getAstFor,
   getAsts,
   getContractFiles,
   getContracts,
+  getLineAndOffset,
 };

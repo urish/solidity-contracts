@@ -10,6 +10,7 @@
     "jest": "^22.4.4"
   },
   "scripts": {
+    "find-cttu": "node src/find-cttu",
     "start": "node src/index",
     "test": "jest"
   }

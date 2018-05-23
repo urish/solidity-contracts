@@ -1,5 +1,5 @@
 const solparse = require('solparse');
-const { traverse } = require('./ast');
+const { getIdentifierName, getType, traverse } = require('./ast');
 
 describe('ast functions', () => {
   describe('traverse', () => {
@@ -32,6 +32,34 @@ describe('ast functions', () => {
         'Type',
         'BlockStatement',
       ]);
+    });
+  });
+
+  describe('getType', () => {
+    it('should return the type of the given node', () => {
+      expect(getType({ type: 'CallExpression' })).toEqual('CallExpression');
+    });
+
+    it('should return undefined if given undefined', () => {
+      expect(getType()).toBeUndefined();
+    });
+  });
+
+  describe('getIdentifierName', () => {
+    it('should return the type of the given node if it is an identifier', () => {
+      expect(getIdentifierName({ type: 'Identifier', name: 'msg' })).toEqual(
+        'msg',
+      );
+    });
+
+    it('should return null if the given node is not an identifier', () => {
+      expect(
+        getIdentifierName({ type: 'CallExpression', name: 'msg' }),
+      ).toBeNull();
+    });
+
+    it('should return null if given undefined', () => {
+      expect(getIdentifierName()).toBeNull();
     });
   });
 });
